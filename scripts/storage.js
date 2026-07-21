@@ -207,6 +207,22 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+/**
+ * Sanitiza URLs para atributos src de <img>.
+ * Usa escapeHtml genérico apenas em texto visível;
+ * em src precisamos somente:
+ *   1. Bloquear o protocolo javascript: (risco de XSS via src)
+ *   2. Escapar apenas " para não quebrar o atributo HTML
+ * NÃO pode usar escapeHtml completo pois converte & e outros chars
+ * que quebram data: URLs base64 e query strings de URLs externas.
+ */
+function safeSrc(url) {
+  const s = String(url ?? '').trim();
+  if (/^javascript:/i.test(s)) return '';   // bloqueia javascript:
+  return s.replace(/"/g, '&quot;');         // só escapa aspas duplas
+}
+
+
 function capitalize(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 }
