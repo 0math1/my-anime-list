@@ -212,8 +212,9 @@ function capitalize(s) {
 }
 
 function findNextUnwatched(anime) {
+  const watchedSet = new Set(anime.watched);
   for (let ep = 1; ep <= anime.episodes; ep++) {
-    if (!anime.watched.includes(ep)) return ep;
+    if (!watchedSet.has(ep)) return ep;
   }
   return null;
 }

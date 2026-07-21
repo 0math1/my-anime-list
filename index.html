@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Watchlist — Calendário de Animes</title>
   <meta name="description" content="Acompanhe quais animes você está assistindo por temporada, com controle de episódios, status e histórico completo.">
+  <meta name="theme-color" content="#ff8fc8">
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles/styles.css"/>
 </head>
 <body data-season="02">
@@ -153,9 +156,9 @@
 </div>
 
 <!-- ===================== MODAL: DETALHE DO ANIME ===================== -->
-<dialog id="detail-modal" class="modal">
-  <div class="modal-box">
-    <button class="modal-close" id="detail-close" type="button">✕</button>
+<dialog id="detail-modal" class="modal" aria-modal="true" aria-labelledby="detail-title">
+  <div class="modal-box" role="document">
+    <button class="modal-close" id="detail-close" type="button" aria-label="Fechar modal de detalhes">✕</button>
     <div class="detail-scroll">
       <div class="detail-layout">
         <img class="detail-cover" id="detail-cover" src="" alt="">
@@ -208,9 +211,9 @@
 </dialog>
 
 <!-- ===================== MODAL: FORMULÁRIO ADD/EDIT ===================== -->
-<dialog id="form-modal" class="modal">
-  <div class="modal-box">
-    <button class="modal-close" id="form-close" type="button">✕</button>
+<dialog id="form-modal" class="modal" aria-modal="true" aria-labelledby="form-title">
+  <div class="modal-box" role="document">
+    <button class="modal-close" id="form-close" type="button" aria-label="Fechar formulário">✕</button>
     <div class="form-scroll">
       <div class="form-title-bar">
         <h3 id="form-title">Adicionar anime</h3>
@@ -331,5 +334,16 @@
 <script src="scripts/storage.js"></script>
 <script src="scripts/ui.js"></script>
 <script src="scripts/app.js"></script>
+
+<!-- Service Worker (só funciona via HTTP, não via file://) -->
+<script>
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('[SW] Registrado:', reg.scope))
+        .catch(err => console.warn('[SW] Falha no registro:', err));
+    });
+  }
+</script>
 </body>
 </html>

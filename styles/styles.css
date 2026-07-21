@@ -1041,3 +1041,36 @@ img { display: block; }
   .form-grid { grid-template-columns: 1fr; }
   .form-field.span-2 { grid-column: 1; }
 }
+
+/* ==========================================================================
+   Responsividade para telas muito pequenas (< 400px)
+   ========================================================================== */
+
+@media (max-width: 400px) {
+  /* Grade semanal: 1 coluna em vez de 2 */
+  .broadcast-grid { grid-template-columns: 1fr; }
+
+  /* Cards de slot menores e legíveis */
+  .slot-card { padding: 8px; gap: 5px; }
+  .slot-card .thumb { width: 36px; height: 48px; }
+  .slot-card .slot-time { font-size: .6rem; }
+  .slot-card .slot-title { font-size: .73rem; }
+  .slot-card .slot-ep-info { font-size: .6rem; }
+
+  /* Grade de pôsteres: 2 colunas menores */
+  .poster-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* Dashboard: métricas em 1 coluna */
+  .metrics-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .metric-card { padding: 14px 12px; gap: 10px; }
+  .metric-value { font-size: 1.5rem; }
+
+  /* Tabs mais compactas */
+  .tabs { gap: 0; }
+  .tab-btn { padding: 7px 8px; font-size: .72rem; }
+
+  /* Topbar empilhada */
+  .topbar { gap: 8px; }
+  .actions { gap: 5px; }
+}
+

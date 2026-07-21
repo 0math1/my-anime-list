@@ -47,7 +47,7 @@ const UI = {
   /* ------------------------------------------------------------------
      Dashboard (Z.ai) — métricas + listas "Hoje" e "Próximos"
   ------------------------------------------------------------------ */
-  renderDashboard(animes) {
+  renderDashboard(animes, callbacks = {}) {
     const watching = animes.filter(a => a.status === 'watching');
     const completed = animes.filter(a => a.status === 'completed');
     let totalWatched = 0, totalPending = 0;
@@ -75,14 +75,18 @@ const UI = {
       todayEl.innerHTML = todayAnimes.map(a => {
         const next = findNextUnwatched(a);
         const { done, total } = this.progressOf(a);
+        const safeCover = escapeHtml(a.cover || '');
+        const safeTime  = escapeHtml(a.time);
+        const safeTitle = escapeHtml(a.title);
+        const safeId    = escapeHtml(a.id);
         return `
-          <div class="dash-item" data-id="${a.id}">
-            <img class="dash-item-thumb" src="${a.cover || ''}" alt="" onerror="this.style.opacity=0" loading="lazy">
+          <div class="dash-item" data-id="${safeId}">
+            <img class="dash-item-thumb" src="${safeCover}" alt="Capa de ${safeTitle}" onerror="this.style.opacity=0" loading="lazy">
             <div class="dash-item-info">
-              <div class="dash-item-title">${escapeHtml(a.title)}</div>
+              <div class="dash-item-title">${safeTitle}</div>
               <div class="dash-item-sub">${next ? `Ep. ${next} disponível` : 'Completo'} · ${done}/${total} eps</div>
             </div>
-            <div class="dash-item-time">${a.time}</div>
+            <div class="dash-item-time">${safeTime}</div>
           </div>
         `;
       }).join('');
@@ -109,19 +113,39 @@ const UI = {
         const next = findNextUnwatched(a);
         const daysShort = { 'domingo': 'Dom', 'segunda-feira': 'Seg', 'terça-feira': 'Ter',
           'quarta-feira': 'Qua', 'quinta-feira': 'Qui', 'sexta-feira': 'Sex', 'sábado': 'Sáb' };
-        const dayAbbr = daysShort[a.day] || a.day;
+        const dayAbbr   = escapeHtml(daysShort[a.day] || a.day);
+        const safeCover = escapeHtml(a.cover || '');
+        const safeTime  = escapeHtml(a.time);
+        const safeTitle = escapeHtml(a.title);
+        const safeId    = escapeHtml(a.id);
         return `
-          <div class="dash-item" data-id="${a.id}">
-            <img class="dash-item-thumb" src="${a.cover || ''}" alt="" onerror="this.style.opacity=0" loading="lazy">
+          <div class="dash-item" data-id="${safeId}">
+            <img class="dash-item-thumb" src="${safeCover}" alt="Capa de ${safeTitle}" onerror="this.style.opacity=0" loading="lazy">
             <div class="dash-item-info">
-              <div class="dash-item-title">${escapeHtml(a.title)}</div>
+              <div class="dash-item-title">${safeTitle}</div>
               <div class="dash-item-sub">Próximo: Ep. ${next}</div>
             </div>
-            <div class="dash-item-time">${dayAbbr} ${a.time}</div>
+            <div class="dash-item-time">${dayAbbr} ${safeTime}</div>
           </div>
         `;
       }).join('');
     }
+
+    // Configura event delegation — um único listener por container
+    this._bindDashItemDelegation('today-list', callbacks);
+    this._bindDashItemDelegation('upcoming-list', callbacks);
+  },
+
+  /** Substitui listeners por item por um único listener delegado no container. */
+  _bindDashItemDelegation(containerId, callbacks) {
+    const el = document.getElementById(containerId);
+    // Remove listener anterior clonando o nó
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+    clone.addEventListener('click', e => {
+      const item = e.target.closest('.dash-item[data-id]');
+      if (item && callbacks?.onOpen) callbacks.onOpen(item.dataset.id);
+    });
   },
 
   /* ------------------------------------------------------------------
@@ -178,21 +202,25 @@ const UI = {
     const { done, total, pct } = this.progressOf(anime);
     const nextEp = findNextUnwatched(anime);
     const allDone = !nextEp;
+    const safeCover = escapeHtml(anime.cover || '');
+    const safeTime  = escapeHtml(anime.time);
+    const safeTitle = escapeHtml(anime.title);
     const card = document.createElement('div');
     card.className = 'slot-card';
+    const markLabel = allDone ? 'Episódios completos' : `Marcar episódio ${nextEp} como assistido`;
     card.innerHTML = `
-      <button type="button" class="mark-next-btn ${allDone ? 'done' : ''}" title="${allDone ? 'Completo' : `Marcar ep. ${nextEp}`}">
+      <button type="button" class="mark-next-btn ${allDone ? 'done' : ''}" aria-label="${markLabel}" title="${allDone ? 'Completo' : `Marcar ep. ${nextEp}`}">
         ${allDone ? '✓' : '+'}
       </button>
       <div class="slot-top">
-        <img class="thumb" src="${anime.cover || ''}" alt="" loading="lazy" onerror="this.style.opacity=0">
+        <img class="thumb" src="${safeCover}" alt="Capa de ${safeTitle}" loading="lazy" onerror="this.style.opacity=0">
         <div class="slot-info">
-          <span class="slot-time">${anime.time}</span>
-          <span class="slot-title">${escapeHtml(anime.title)}</span>
+          <span class="slot-time">${safeTime}</span>
+          <span class="slot-title">${safeTitle}</span>
           <span class="slot-status ${STATUS_CLASS[anime.status] || ''}">${STATUS_LABELS[anime.status] || ''}</span>
         </div>
       </div>
-      <div class="progress-bar"><span style="width:${pct}%"></span></div>
+      <div class="progress-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso: ${done} de ${total} episódios"><span style="width:${pct}%"></span></div>
       <div class="slot-ep-info">${done}/${total} eps · ${allDone ? 'Completo' : `Próx: ep. ${nextEp}`}</div>
     `;
     card.addEventListener('click', () => callbacks.onOpen(anime));
@@ -265,23 +293,31 @@ const UI = {
       .sort((a, b) => (DAY_ORDER[a.day] - DAY_ORDER[b.day]) || a.time.localeCompare(b.time))
       .forEach(anime => {
         const { pct } = this.progressOf(anime);
+        const safeCover = escapeHtml(anime.cover || '');
+        const safeTitle = escapeHtml(anime.title);
+        const safeDay   = escapeHtml(capitalize((anime.day || '').split('-')[0]).slice(0,3));
+        const safeTime  = escapeHtml(anime.time);
         const card = document.createElement('div');
         card.className = 'poster-card';
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', `Abrir detalhes de ${anime.title}`);
         card.innerHTML = `
           <div class="poster-img-wrap">
-            <img src="${anime.cover || ''}" alt="" loading="lazy" onerror="this.style.opacity=0">
-            <span class="poster-badge">${pct}%</span>
+            <img src="${safeCover}" alt="Capa de ${safeTitle}" loading="lazy" onerror="this.style.opacity=0">
+            <span class="poster-badge" aria-hidden="true">${pct}%</span>
             <span class="poster-status ${STATUS_CLASS[anime.status] || ''}">${STATUS_LABELS[anime.status] || ''}</span>
           </div>
           <div class="poster-body">
-            <div class="poster-title">${escapeHtml(anime.title)}</div>
+            <div class="poster-title">${safeTitle}</div>
             <div class="poster-progress-row">
-              <div class="progress-bar" style="flex:1"><span style="width:${pct}%"></span></div>
-              <span class="poster-day">${capitalize((anime.day || '').split('-')[0]).slice(0,3)} ${anime.time}</span>
+              <div class="progress-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso: ${pct}%" style="flex:1"><span style="width:${pct}%"></span></div>
+              <span class="poster-day">${safeDay} ${safeTime}</span>
             </div>
           </div>
         `;
         card.addEventListener('click', () => callbacks.onOpen(anime));
+        card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); callbacks.onOpen(anime); } });
         container.appendChild(card);
       });
   },

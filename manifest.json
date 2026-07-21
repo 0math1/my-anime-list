@@ -1,0 +1,20 @@
+﻿{
+  "name": "Watchlist — Calendário de Animes",
+  "short_name": "Watchlist",
+  "description": "Acompanhe seus animes por temporada, com controle de episódios, status e histórico completo.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#080a12",
+  "theme_color": "#ff8fc8",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "images/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["entertainment", "lifestyle"],
+  "lang": "pt-BR"
+}

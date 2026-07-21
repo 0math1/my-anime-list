@@ -70,21 +70,20 @@ const App = {
     document.getElementById('brand-sub').textContent =
       `${this.animes.length} título${this.animes.length !== 1 ? 's' : ''} rastreado${this.animes.length !== 1 ? 's' : ''}`;
 
+    // Renderiza apenas a aba ativa (+ dashboard que serve o topbar)
     this.renderDashboard();
-    this.renderAtual();
-    this.renderHistorico();
-    this.renderStats();
+    if (this.activeView === 'atual')     this.renderAtual();
+    if (this.activeView === 'historico') this.renderHistorico();
+    if (this.activeView === 'stats')     this.renderStats();
   },
 
   renderDashboard() {
     const dashboardAnimes = this.currentSeasonCode ? this.animesInSeason(this.currentSeasonCode) : [];
-    UI.renderDashboard(dashboardAnimes);
-    // Bind cliques nos itens do dashboard → abrir modal de detalhe
-    document.querySelectorAll('.dash-item[data-id]').forEach(el => {
-      el.addEventListener('click', () => {
-        const anime = this.animes.find(a => a.id === el.dataset.id);
+    UI.renderDashboard(dashboardAnimes, {
+      onOpen: (id) => {
+        const anime = this.animes.find(a => a.id === id);
         if (anime) this.openDetail(anime);
-      });
+      }
     });
   },
 
@@ -179,6 +178,7 @@ const App = {
         this.activeView = btn.dataset.view;
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(`view-${this.activeView}`).classList.add('active');
+        // Renderiza somente a aba que foi selecionada
         this.renderAll();
       });
     });
@@ -213,7 +213,7 @@ const App = {
   /* ---------------------------------------------------------------- dashboard events */
 
   bindDashboard() {
-    // Os cliques nos dash-items são re-bindados a cada renderDashboard()
+    // Event delegation é gerenciado em UI.renderDashboard() via _bindDashItemDelegation()
   },
 
   /* ---------------------------------------------------------------- modal detalhe */
@@ -222,6 +222,21 @@ const App = {
     const modal = document.getElementById('detail-modal');
     document.getElementById('detail-close').addEventListener('click', () => modal.close());
     modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
+
+    // Focus trap no modal de detalhe
+    modal.addEventListener('keydown', e => {
+      if (e.key !== 'Tab') return;
+      const focusable = Array.from(modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )).filter(el => !el.disabled && el.offsetParent !== null);
+      if (focusable.length === 0) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
 
     document.getElementById('ep-mark-all').addEventListener('click', () => {
       const anime = this._detailAnime;
@@ -348,6 +363,21 @@ const App = {
     document.getElementById('form-close').addEventListener('click', () => modal.close());
     document.getElementById('form-cancel').addEventListener('click', () => modal.close());
     modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
+
+    // Focus trap no modal de formulário
+    modal.addEventListener('keydown', e => {
+      if (e.key !== 'Tab') return;
+      const focusable = Array.from(modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )).filter(el => !el.disabled && el.offsetParent !== null);
+      if (focusable.length === 0) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
 
     // Preview ao vivo da URL da capa
     document.getElementById('f-cover-url').addEventListener('input', e => {
