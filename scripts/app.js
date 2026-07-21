@@ -214,14 +214,14 @@ const App = {
 
   bindDashboard() {
     // Event delegation é gerenciado em UI.renderDashboard() via _bindDashItemDelegation()
-  },
-
   /* ---------------------------------------------------------------- modal detalhe */
 
   bindDetailModal() {
     const modal = document.getElementById('detail-modal');
-    document.getElementById('detail-close').addEventListener('click', () => modal.close());
-    modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
+    document.getElementById('detail-close').addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', e => { 
+      if (e.target === modal) modal.classList.remove('open'); 
+    });
 
     // Focus trap no modal de detalhe
     modal.addEventListener('keydown', e => {
@@ -268,7 +268,7 @@ const App = {
 
     document.getElementById('detail-edit').addEventListener('click', () => {
       const anime = this._detailAnime;
-      modal.close();
+      modal.classList.remove('open');
       this.openForm(anime);
     });
 
@@ -279,14 +279,14 @@ const App = {
       this.persist();
       this.recomputeSeasons();
       this.renderAll();
-      modal.close();
+      modal.classList.remove('open');
       UI.toast('Anime removido', 'warning');
     });
 
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
-        document.getElementById('detail-modal').close();
-        document.getElementById('form-modal').close();
+        document.getElementById('detail-modal').classList.remove('open');
+        document.getElementById('form-modal').classList.remove('open');
       }
     });
   },
@@ -323,7 +323,7 @@ const App = {
     });
 
     this.renderEpGrid(anime);
-    document.getElementById('detail-modal').showModal();
+    document.getElementById('detail-modal').classList.add('open');
   },
 
   updateDetailStatus(anime) {
@@ -360,9 +360,11 @@ const App = {
 
   bindFormModal() {
     const modal = document.getElementById('form-modal');
-    document.getElementById('form-close').addEventListener('click', () => modal.close());
-    document.getElementById('form-cancel').addEventListener('click', () => modal.close());
-    modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
+    document.getElementById('form-close').addEventListener('click', () => modal.classList.remove('open'));
+    document.getElementById('form-cancel').addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', e => { 
+      if (e.target === modal) modal.classList.remove('open'); 
+    });
 
     // Focus trap no modal de formulário
     modal.addEventListener('keydown', e => {
@@ -449,7 +451,7 @@ const App = {
     document.getElementById('f-start-year').value = defYear;
     document.getElementById('f-start-season-only').value = defSeason;
 
-    document.getElementById('form-modal').showModal();
+    document.getElementById('form-modal').classList.add('open');
     document.getElementById('f-title').focus();
   },
 
@@ -495,8 +497,9 @@ const App = {
     this.persist();
     this.recomputeSeasons();
     this.renderAll();
-    document.getElementById('form-modal').close();
-    UI.toast(this.editingId ? 'Anime atualizado ✓' : 'Anime adicionado ✓', 'success');
+    
+    document.getElementById('form-modal').classList.remove('open');
+    UI.toast(this.editingId ? 'Anime atualizado' : 'Anime adicionado', 'success');
   }
 };
 
