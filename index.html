@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Watchlist — Calendário de Animes</title>
+  <meta name="description" content="Acompanhe quais animes você está assistindo por temporada, com controle de episódios, status e histórico completo.">
+  <link rel="stylesheet" href="styles/styles.css"/>
+</head>
+<body data-season="02">
+<div id="app">
+
+  <!-- ===================== TOPBAR ===================== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark">EP</span>
+      <div>
+        <h1>Watchlist</h1>
+        <div class="sub" id="brand-sub">carregando…</div>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-view="dashboard" type="button">Dashboard</button>
+      <button class="tab-btn" data-view="atual" type="button">Atual</button>
+      <button class="tab-btn" data-view="historico" type="button">Histórico</button>
+      <button class="tab-btn" data-view="stats" type="button">Estatísticas</button>
+    </nav>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-add" type="button">+ <span class="btn-label">Adicionar</span></button>
+      <button class="btn btn-ghost" id="btn-export" type="button" title="Exportar JSON">⭳ <span class="btn-label">Exportar</span></button>
+      <button class="btn btn-ghost" id="btn-import" type="button" title="Importar JSON">⭱ <span class="btn-label">Importar</span></button>
+      <input type="file" id="import-input" accept="application/json" hidden>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===================== ABA: DASHBOARD ===================== -->
+    <section id="view-dashboard" class="view active">
+      <div class="view-head">
+        <div>
+          <span class="eyebrow">Visão Geral</span>
+          <h2>Dashboard</h2>
+        </div>
+      </div>
+
+      <!-- Métricas -->
+      <div class="metrics-grid">
+        <div class="metric-card metric-card--watching">
+          <div class="metric-icon">▶</div>
+          <div>
+            <p class="metric-label">Assistindo</p>
+            <p class="metric-value" id="stat-watching">0</p>
+          </div>
+        </div>
+        <div class="metric-card metric-card--watched">
+          <div class="metric-icon">✓</div>
+          <div>
+            <p class="metric-label">Ep. vistos</p>
+            <p class="metric-value" id="stat-watched">0</p>
+          </div>
+        </div>
+        <div class="metric-card metric-card--pending">
+          <div class="metric-icon">⏳</div>
+          <div>
+            <p class="metric-label">Pendentes</p>
+            <p class="metric-value" id="stat-pending">0</p>
+          </div>
+        </div>
+        <div class="metric-card metric-card--done">
+          <div class="metric-icon">🏆</div>
+          <div>
+            <p class="metric-label">Finalizados</p>
+            <p class="metric-value" id="stat-completed">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Listas -->
+      <div class="dash-lists">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h3>🔥 Lançamentos de Hoje</h3>
+            <span class="dash-badge" id="today-badge">0</span>
+          </div>
+          <div class="dash-card-body" id="today-list">
+            <p class="list-empty">Nenhum lançamento hoje 🎉</p>
+          </div>
+        </div>
+
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h3>⚡ Próximos Episódios</h3>
+          </div>
+          <div class="dash-card-body" id="upcoming-list">
+            <p class="list-empty">Adicione animes para ver aqui</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== ABA: TEMPORADA ATUAL ===================== -->
+    <section id="view-atual" class="view">
+      <div class="view-head">
+        <div>
+          <span class="eyebrow">No ar agora</span>
+          <h2 id="atual-season-label">Temporada atual</h2>
+        </div>
+        <div class="meta" id="atual-meta"></div>
+      </div>
+      <div class="broadcast-grid" id="broadcast-grid"></div>
+    </section>
+
+    <!-- ===================== ABA: HISTÓRICO ===================== -->
+    <section id="view-historico" class="view">
+      <div class="view-head">
+        <div>
+          <span class="eyebrow">Arquivo</span>
+          <h2>Histórico por temporada</h2>
+        </div>
+        <div class="meta" id="historico-meta"></div>
+      </div>
+      <div class="season-picker" id="season-picker"></div>
+      <div class="poster-grid" id="poster-grid"></div>
+    </section>
+
+    <!-- ===================== ABA: ESTATÍSTICAS ===================== -->
+    <section id="view-stats" class="view">
+      <div class="view-head">
+        <div>
+          <span class="eyebrow">Análise</span>
+          <h2>Estatísticas</h2>
+        </div>
+        <div class="stats-filters">
+          <select id="stats-year-filter">
+             <option value="all">Todos os Anos</option>
+          </select>
+          <select id="stats-season-filter">
+             <option value="all">Todas as Temporadas</option>
+             <option value="02">Primavera</option>
+             <option value="03">Verão</option>
+             <option value="04">Outono</option>
+             <option value="01">Inverno</option>
+          </select>
+        </div>
+      </div>
+      <div class="stats-grid" id="stats-container"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===================== MODAL: DETALHE DO ANIME ===================== -->
+<dialog id="detail-modal" class="modal">
+  <div class="modal-box">
+    <button class="modal-close" id="detail-close" type="button">✕</button>
+    <div class="detail-scroll">
+      <div class="detail-layout">
+        <img class="detail-cover" id="detail-cover" src="" alt="">
+        <div class="detail-main">
+          <span class="detail-day-time" id="detail-day-time"></span>
+          <h3 class="detail-title" id="detail-title"></h3>
+          <div class="detail-tags" id="detail-tags"></div>
+
+          <div class="detail-facts">
+            <span class="fact">Episódios: <b id="detail-ep-count"></b></span>
+            <span class="fact">Início: <b id="detail-start-season"></b></span>
+          </div>
+
+          <div class="detail-progress-row">
+            <div class="progress-bar"><span id="detail-progress-fill"></span></div>
+            <span class="pct" id="detail-progress-pct"></span>
+          </div>
+
+          <!-- Status selector -->
+          <div class="detail-status-row">
+            <label for="detail-status-select">Status</label>
+            <select id="detail-status-select" class="status-select">
+              <option value="watching">Assistindo</option>
+              <option value="completed">Finalizado</option>
+              <option value="paused">Pausado</option>
+              <option value="dropped">Dropado</option>
+            </select>
+          </div>
+
+          <div class="ep-toolbar">
+            <span class="label">Episódios assistidos</span>
+            <div class="ep-actions">
+              <button type="button" id="ep-mark-all">Marcar todos</button>
+              <button type="button" id="ep-clear-all">Limpar</button>
+            </div>
+          </div>
+          <div class="ep-grid" id="ep-grid"></div>
+
+          <div class="detail-footer">
+            <a class="btn btn-primary" id="detail-link" href="#" target="_blank" rel="noopener">▶ Assistir</a>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost" id="detail-edit" type="button">Editar</button>
+              <button class="btn btn-danger" id="detail-delete" type="button">Excluir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- ===================== MODAL: FORMULÁRIO ADD/EDIT ===================== -->
+<dialog id="form-modal" class="modal">
+  <div class="modal-box">
+    <button class="modal-close" id="form-close" type="button">✕</button>
+    <div class="form-scroll">
+      <div class="form-title-bar">
+        <h3 id="form-title">Adicionar anime</h3>
+      </div>
+      <form id="anime-form">
+        <div class="form-grid">
+
+          <!-- Capa -->
+          <div class="form-field span-2">
+            <label>Capa</label>
+            <div class="cover-input-row">
+              <img id="f-cover-preview" src="" alt="preview" style="opacity:0">
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+                <input type="url" id="f-cover-url" placeholder="URL da imagem (https://...)">
+                <label class="file-btn" for="f-cover-file">📁 Enviar arquivo local</label>
+                <input type="file" id="f-cover-file" accept="image/*" hidden>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nome -->
+          <div class="form-field span-2">
+            <label for="f-title">Nome do anime *</label>
+            <input type="text" id="f-title" required placeholder="Ex: Frieren: Beyond Journey's End">
+          </div>
+
+          <!-- Episódios -->
+          <div class="form-field">
+            <label for="f-episodes">Total de episódios *</label>
+            <input type="number" id="f-episodes" min="1" max="9999" value="12" required>
+          </div>
+
+          <!-- Episódios assistidos -->
+          <div class="form-field">
+            <label for="f-watched-count">Episódios assistidos</label>
+            <input type="number" id="f-watched-count" min="0" max="9999" value="0">
+          </div>
+
+          <!-- Ano de início -->
+          <div class="form-field">
+            <label for="f-start-year">Ano *</label>
+            <input type="number" id="f-start-year" required>
+          </div>
+
+          <!-- Temporada de início -->
+          <div class="form-field">
+            <label for="f-start-season-only">Temporada *</label>
+            <select id="f-start-season-only" required>
+              <option value="02">Primavera</option>
+              <option value="03">Verão</option>
+              <option value="04">Outono</option>
+              <option value="01">Inverno</option>
+            </select>
+          </div>
+
+          <!-- Dia de lançamento -->
+          <div class="form-field">
+            <label for="f-day">Dia de lançamento</label>
+            <select id="f-day">
+              <option value="domingo">Domingo</option>
+              <option value="segunda-feira">Segunda-feira</option>
+              <option value="terça-feira">Terça-feira</option>
+              <option value="quarta-feira">Quarta-feira</option>
+              <option value="quinta-feira">Quinta-feira</option>
+              <option value="sexta-feira">Sexta-feira</option>
+              <option value="sábado">Sábado</option>
+            </select>
+          </div>
+
+          <!-- Horário -->
+          <div class="form-field">
+            <label for="f-time">Horário</label>
+            <input type="time" id="f-time" value="12:00">
+          </div>
+
+          <!-- Status -->
+          <div class="form-field">
+            <label for="f-status">Status</label>
+            <select id="f-status">
+              <option value="watching">Assistindo</option>
+              <option value="completed">Finalizado</option>
+              <option value="paused">Pausado</option>
+              <option value="dropped">Dropado</option>
+            </select>
+          </div>
+
+          <!-- Link -->
+          <div class="form-field span-2">
+            <label for="f-link">Link (onde baixar / assistir)</label>
+            <input type="url" id="f-link" placeholder="https://...">
+          </div>
+
+          <!-- Tags -->
+          <div class="form-field span-2">
+            <label for="f-tags">Tags (separadas por vírgula)</label>
+            <textarea id="f-tags" placeholder="isekai, ação, comédia"></textarea>
+          </div>
+
+        </div>
+
+        <div class="form-actions">
+          <span class="hint" id="form-hint">Depois de salvar, marque os episódios assistidos no card do anime.</span>
+          <div class="form-btns">
+            <button type="button" class="btn btn-ghost" id="form-cancel">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</dialog>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="data/animes-seed.js"></script>
+<script src="scripts/storage.js"></script>
+<script src="scripts/ui.js"></script>
+<script src="scripts/app.js"></script>
+</body>
+</html>
